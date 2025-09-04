@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Japanese + Romaji Typing Practice</title>
+    <link rel="stylesheet" href="./typing-practice.css" />
+    <meta name="color-scheme" content="light dark" />
+  </head>
+  <body>
+    <div id="typing-app">
+      <!-- ヘッダー／操作パネル -->
+      <header class="topbar" role="banner">
+        <h1 class="app-title">Typing Practice (JA + Romaji)</h1>
+        <nav class="controls" aria-label="コントロール">
+          <button id="btn-start" class="btn" aria-pressed="false">開始</button>
+          <button id="btn-restart" class="btn" aria-pressed="false">リスタート</button>
+
+          <label class="ctrl">
+            <input id="toggle-indicate-typos" type="checkbox" checked />
+            ミスタイプを文字の下に表示
+          </label>
+
+          <label class="ctrl">
+            <input id="toggle-caret" type="checkbox" checked />
+            キャレット表示
+          </label>
+
+          <label class="ctrl">
+            文字サイズ
+            <input id="font-size" type="range" min="14" max="32" value="20" />
+          </label>
+        </nav>
+      </header>
+
+      <!-- メインのタイピング領域 -->
+      <main id="viewport"
+            class="typing-viewport"
+            role="application"
+            aria-roledescription="タイピング練習"
+            aria-label="日本語とローマ字の2段表示。ローマ字入力で判定します。"
+            data-judge="romaji"
+            data-indicate-typos="true"
+            tabindex="0">
+
+        <!-- 画面表示レイヤ群（重ね合わせ） -->
+        <section class="display" aria-live="off" aria-atomic="false">
+          <!-- 2段表示（上：日本語、下：ローマ字） -->
+          <div id="lines" class="lines">
+            <!-- 日本語行（上段） -->
+            <div id="line-japanese" class="line japanese-line" aria-hidden="false"></div>
+
+            <!-- ローマ字行（下段：判定対象） -->
+            <div id="line-romaji" class="line romaji-line" aria-hidden="false"></div>
+
+            <!-- ミスタイプ表示行（ローマ字のさらに下段） -->
+            <div id="line-typo" class="line typo-line" aria-hidden="true"></div>
+          </div>
+
+          <!-- キャレット（毎タイプで次文字へアニメーション移動） -->
+          <div id="caret"
+               class="caret"
+               aria-hidden="true"
+               data-animated="true"></div>
+        </section>
+
+        <!-- スクリーンリーダー向けのライブリージョン（文字読み上げ等） -->
+        <p id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+
+        <!-- 入力取得用の不可視テキスト入力（モバイル対応・IME無効） -->
+        <input id="ghost-input"
+               class="ghost-input"
+               type="text"
+               inputmode="latin"
+               autocomplete="off"
+               autocorrect="off"
+               autocapitalize="off"
+               spellcheck="false"
+               aria-hidden="true" />
+      </main>
+
+      <!-- 統計・進捗表示 -->
+      <section class="stats" aria-label="成績">
+        <div class="stat">
+          <strong id="wpm">0</strong>
+          <span class="label">WPM</span>
+        </div>
+        <div class="stat">
+          <strong id="accuracy">100%</strong>
+          <span class="label">正確性</span>
+        </div>
+        <div class="stat">
+          <strong id="errors">0</strong>
+          <span class="label">ミス</span>
+        </div>
+        <div class="stat">
+          <strong id="progress">0%</strong>
+          <span class="label">進捗</span>
+        </div>
+      </section>
+
+      <!-- ヒント -->
+      <footer class="footer">
+        <p class="hint">
+          フォーカス（クリック or Tab）後にキーボードで入力してください。ローマ字で判定します。
+          ミスタイプはローマ字行のさらに下段に表示されます。キャレットは各キー入力で次の文字へ移動します。
+        </p>
+      </footer>
+    </div>
+
+    <!-- データ（例）: JSから取得して使います -->
+    <script id="ja-romaji-data" type="application/json">
+      [
+        { "japanese": "ことわざは", "romaji": "kotowazaha" },
+        { "japanese": "昔", "romaji": "mukasi" },
+        { "japanese": "から", "romaji": "kara" },
+        { "japanese": "言い伝え", "romaji": "iitutae" },
+        { "japanese": "られてきた", "romaji": "raretekita" },
+        { "japanese": "教訓", "romaji": "kyoukunn" },
+        { "japanese": "や", "romaji": "ya" },
+        { "japanese": "知識", "romaji": "tisiki" },
+        { "japanese": "などを", "romaji": "nadowo" },
+        { "japanese": "ふくんだ", "romaji": "hukunnda" },
+        { "japanese": "短い", "romaji": "mizikai" },
+        { "japanese": "言葉", "romaji": "kotoba" },
+        { "japanese": "です。", "romaji": "desu." }
+      ]
+    </script>
+
+    <!-- 実装（キャレット移動、ミスタイプ表示、2段描画、判定ロジックなど） -->
+    <script type="module" src="./typing-practice.js"></script>
+  </body>
+</html>

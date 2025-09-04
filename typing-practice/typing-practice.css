@@ -1,0 +1,320 @@
+/* src/typing-practice/typing-practice.css */
+
+/* ========== 基本リセット & 変数 ========== */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+:root {
+  --bg: #0e1116;
+  --bg-elev: #141922;
+  --fg: #e6eaf2;
+  --muted: #a7b0c0;
+  --accent: #7aa2f7;
+  --good: #78dba9;
+  --bad: #ff6b6b;
+  --warn: #f6c177;
+  --caret-color: #e6eaf2;
+  --border: #2a3241;
+  --surface: #11151c;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+               Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN",
+               "Yu Gothic UI", "Yu Gothic", Meiryo, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+               "Liberation Mono", "Noto Sans Mono", "Cascadia Code", monospace;
+
+  --radius: 10px;
+  --pad: 16px;
+  --gap: 12px;
+  --shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f6f7fb;
+    --bg-elev: #ffffff;
+    --fg: #111318;
+    --muted: #5a6473;
+    --accent: #3366ff;
+    --good: #16a34a;
+    --bad: #e11d48;
+    --warn: #b45309;
+    --caret-color: #111318;
+    --border: #e6e8ef;
+    --surface: #ffffff;
+    --shadow: 0 8px 20px rgba(0,0,0,0.08);
+  }
+}
+
+/* ========== 全体レイアウト ========== */
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#typing-app {
+  max-width: 980px;
+  margin: 24px auto;
+  padding: 0 16px 24px;
+}
+
+/* ========== ヘッダー/コントロール ========== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  margin-bottom: 16px;
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin: 0;
+  color: var(--fg);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  user-select: none;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  background: var(--bg-elev);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, transform 50ms ease;
+}
+.btn:hover { background: color-mix(in oklab, var(--bg-elev) 90%, var(--fg) 10%); }
+.btn:active { transform: translateY(1px); }
+.btn[aria-pressed="true"] {
+  background: color-mix(in oklab, var(--bg-elev) 80%, var(--accent) 20%);
+  border-color: color-mix(in oklab, var(--border) 60%, var(--accent) 40%);
+}
+
+/* ========== タイピングビュー ========== */
+.typing-viewport {
+  padding: 18px;
+  outline: none;
+}
+
+.typing-viewport:focus-visible {
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--accent) 20%, transparent),
+    var(--shadow);
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--border) 60%);
+}
+
+/* 表示レイヤ: キャレットの基準となる */
+.display {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  min-height: 6.2em; /* 初期高さを確保（2段＋タイポ行） */
+}
+
+/* 3行スタック */
+.lines {
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+/* 日本語（上段） */
+.japanese-line {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ローマ字（下段：判定対象） */
+.romaji-line {
+  margin: 0;
+  font-family: var(--font-mono);
+  color: var(--fg);
+}
+
+/* ミスタイプ行（ローマ字のさらに下） */
+.typo-line {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  color: var(--bad);
+  min-height: 1.6em; /* 1行分のスペースを常に確保 */
+}
+
+/* ========== 文字スパン ========== */
+/* 1文字ずつのボックスにして折り返しを同期させる */
+.romaji-line .char,
+.typo-line .typo-char {
+  display: inline-block;
+  white-space: pre; /* " "（空白）を幅として保持 */
+  letter-spacing: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* 状態表示 */
+.char {
+  color: color-mix(in oklab, var(--fg) 84%, transparent);
+  transition: background-color 120ms ease, color 120ms ease, text-decoration-color 120ms ease;
+}
+.char.current {
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+  outline: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
+  border-radius: 4px;
+}
+.char.correct {
+  color: var(--good);
+}
+.char.wrong {
+  color: var(--bad);
+  text-decoration: underline wavy color-mix(in oklab, var(--bad) 80%, transparent);
+  text-underline-offset: 3px;
+}
+
+/* ミスタイプの表示（デフォは透明文字だが幅保持、showで発色） */
+.typo-char {
+  color: transparent;
+}
+.typo-char.show {
+  color: var(--bad);
+}
+
+/* 日本語トークン（適度な区切り感） */
+.ja-token + .ja-token {
+  margin-left: .25em;
+}
+
+/* ========== キャレット ========== */
+/* base: 常時表示（点滅なし） */
+.caret {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 1.6em; /* JSで上書きされます */
+  background: var(--caret-color);
+  border-radius: 1px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 1;
+  transition: transform 120ms ease, height 120ms ease, opacity 150ms ease;
+}
+
+/* data-blink="on" のときだけ点滅 */
+.caret[data-blink="on"] {
+  animation: caret-blink 1.2s step-end infinite;
+}
+
+@keyframes caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .25; }
+}
+
+/* 動きが苦手な人向け: 点滅を強制OFF */
+@media (prefers-reduced-motion: reduce) {
+  .caret[data-blink="on"] {
+    animation: none !important;
+  }
+}
+
+/* ========== スクリーンリーダー向け ========== */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+
+/* ========== 入力用の不可視フィールド ========== */
+.ghost-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  left: -9999px;
+  top: 0;
+}
+
+/* ========== 統計表示 ========== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(90px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.stat {
+  display: grid;
+  justify-items: center;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 8px;
+}
+.stat strong {
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--fg);
+}
+.stat .label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ========== フッター ========== */
+.footer {
+  margin-top: 14px;
+  color: var(--muted);
+}
+.footer .hint {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ========== レスポンシブ微調整 ========== */
+@media (max-width: 680px) {
+  .controls { gap: 8px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ========== ユーザー選択やドラッグの無効化（タイピング中の誤選択防止） ========== */
+.lines, .lines * {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ========== 補助: フォーカスリング ========== */
+input[type="checkbox"]:focus-visible,
+input[type="range"]:focus-visible,
+button:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
