@@ -63,25 +63,7 @@ html, body {
   padding: 0 16px 24px;
 } */
 
-#typing-app {
-  display: grid;
-
-  /* あなたの例と同じ列定義をコピー */
-  grid-template-columns:
-    [full-width-start] var(--padding-inline)
-    [full-width-padding-start] minmax(0, 1fr)
-    [breakout-start] minmax(0, var(--breakout-size))
-    [content-start] min(100% - var(--padding-inline) * 2, var(--content-max-width))
-    [content-end] minmax(0, var(--breakout-size))
-    [breakout-end] minmax(0, 1fr)
-    [full-width-padding-end] var(--padding-inline)
-    [full-width-end];
-
-  /* 行も必要なら */
-  grid-template-rows: 1fr auto 2fr;
-}
-
-#viewport {
+#lines {
   grid-column-start: content;
   grid-column-end: content;
 
@@ -96,7 +78,6 @@ html, body {
   /* relative を指定して caret 等を絶対配置できるようにする */
   position: relative;
 }
-
 
 /* ========== ヘッダー/コントロール ========== */
 .topbar {
@@ -150,9 +131,27 @@ html, body {
 }
 
 /* ========== タイピングビュー ========== */
-.typing-viewport {
+/* .typing-viewport {
   padding: 18px;
   outline: none;
+} */
+
+.typing-viewport {
+  display: grid;
+
+  /* あなたの例と同じ列定義をコピー */
+  grid-template-columns:
+    [full-width-start] var(--padding-inline)
+    [full-width-padding-start] minmax(0, 1fr)
+    [breakout-start] minmax(0, var(--breakout-size))
+    [content-start] min(100% - var(--padding-inline) * 2, var(--content-max-width))
+    [content-end] minmax(0, var(--breakout-size))
+    [breakout-end] minmax(0, 1fr)
+    [full-width-padding-end] var(--padding-inline)
+    [full-width-end];
+
+  /* 行も必要なら */
+  grid-template-rows: 1fr auto 2fr;
 }
 
 .typing-viewport:focus-visible {
@@ -354,4 +353,5 @@ button:focus-visible {
   border-radius: 6px;
 
 }
+
 
