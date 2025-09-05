@@ -113,7 +113,7 @@
       .romaji-line .char.has-typo { display:inline-block; }
       .romaji-line .char .typo-indicator {
         position:absolute; left:50%; transform:translateX(-50%);
-        top:calc(70%); color:var(--correct-letter-color, #414141);
+        top:calc(80%); color:var(--correct-letter-color, #414141);
         font-size:0.75em; line-height:1; pointer-events:none; user-select:none; white-space:pre;
       }
       .typos-on .romaji-line { padding-bottom:1.1em; }
@@ -460,5 +460,6 @@
     init();
   }
 })();
+
 
 
