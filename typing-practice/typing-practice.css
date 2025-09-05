@@ -198,8 +198,8 @@ html, body {
 }
 .char.wrong {
   color: var(--bad);
-  text-decoration: underline wavy color-mix(in oklab, var(--bad) 80%, transparent);
-  text-underline-offset: 3px;
+/*   text-decoration: underline wavy color-mix(in oklab, var(--bad) 80%, transparent);
+  text-underline-offset: 3px; */
 }
 
 /* ミスタイプの表示（デフォは透明文字だが幅保持、showで発色） */
@@ -325,6 +325,7 @@ button:focus-visible {
   border-radius: 6px;
 
 }
+
 
 
 
