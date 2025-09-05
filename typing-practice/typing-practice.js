@@ -36,14 +36,14 @@
       .replace(/'/g, "&#39;");
   }
   function isPrintableKey(e) {
-    // 通常の印字可能キー（記号/数字/英字/スペース）
     if (typeof e.key !== "string") return false;
     if (e.key === " " || e.key === "Spacebar") return true;
-    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      // IME合成中などの "Dead" は除外
-      return e.key !== "Dead";
-    }
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) return e.key !== "Dead";
     return false;
+  }
+  // 次の文字ハイライトの現在状態（data属性を真実のソースに）
+  function isHighlightOn() {
+    return viewport.getAttribute("data-highlight-current") !== "off";
   }
 
   // ========= データ =========
@@ -68,12 +68,10 @@
   let TOTAL = ROMAJI.length;
 
   // ========= 状態 =========
-  // 0:未入力, 1:正解, -1:ミス
-  let states = new Int8Array(TOTAL);
-  // ミスタイプの最後の1文字（index -> char）
-  let typos = Object.create(null);
+  let states = new Int8Array(TOTAL); // 0:未入力, 1:正解, -1:ミス
+  let typos = Object.create(null);   // index -> last wrong char
 
-  let charSpans = []; // data-index 順で参照
+  let charSpans = [];
   let currentIndex = 0;
   let started = false;
   let finished = false;
@@ -83,7 +81,7 @@
   let correctCount = 0;
   let errorCount = 0;
 
-  // ▼ここに追加（キャレット点滅制御）
+  // ========= キャレット点滅制御 =========
   const CARET_IDLE_MS = 650;
   let caretBlinkTimer = null;
 
@@ -91,80 +89,45 @@
     if (!caretEl) return;
     caretEl.setAttribute("data-blink", on ? "on" : "off");
   }
-
   function pauseCaretBlink() {
     setCaretBlink(false);
     if (caretBlinkTimer) clearTimeout(caretBlinkTimer);
     caretBlinkTimer = setTimeout(() => setCaretBlink(true), CARET_IDLE_MS);
   }
-
   function resumeCaretBlink() {
     if (caretBlinkTimer) clearTimeout(caretBlinkTimer);
     setCaretBlink(true);
   }
-  // ▲ここまで
 
-  // ========= タイポ表示用の簡易スタイルを注入 =========
-  // 置き換え: ミスタイプ表示用スタイルを再定義（inline-flexを廃止）
-function installTypoStyles() {
-  const STYLE_ID = "typing-typo-style";
-  let style = document.getElementById(STYLE_ID);
-  if (!style) {
-    style = document.createElement("style");
-    style.id = STYLE_ID;
-    document.head.appendChild(style);
+  // ========= タイポ表示用の簡易スタイル =========
+  function installTypoStyles() {
+    const STYLE_ID = "typing-typo-style";
+    let style = document.getElementById(STYLE_ID);
+    if (!style) {
+      style = document.createElement("style");
+      style.id = STYLE_ID;
+      document.head.appendChild(style);
+    }
+    style.textContent = `
+      .romaji-line .char { display:inline-block; position:relative; vertical-align:baseline; }
+      .romaji-line .char.has-typo { display:inline-block; }
+      .romaji-line .char .typo-indicator {
+        position:absolute; left:50%; transform:translateX(-50%);
+        top:calc(100% + 0.15em); color:var(--bad, #d32f2f);
+        font-size:0.75em; line-height:1; pointer-events:none; user-select:none; white-space:pre;
+      }
+      .typos-on .romaji-line { padding-bottom:1.1em; }
+      .word-group { display:inline-block; margin-right:.4em; margin-bottom:.3em; }
+      .word-group .japanese-line { color:var(--muted); margin:0 0 2px; font-weight:500; }
+      .word-group .romaji-line { margin:0; }
+    `;
   }
-  style.textContent = `
-    /* 文字はベースライン固定のまま */
-    .romaji-line .char {
-      display: inline-block;
-      position: relative;   /* インジケータを絶対配置するため */
-      vertical-align: baseline;
-    }
-    /* has-typoでも display を変えない（inline-flexにしない） */
-    .romaji-line .char.has-typo {
-      display: inline-block;
-    }
-    /* ミスタイプは文字の「下」に絶対配置（親の高さを変えない） */
-    .romaji-line .char .typo-indicator {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      top: calc(100% + 0.15em); /* 文字のベースラインより少し下 */
-      color: var(--bad, #d32f2f);
-      font-size: 0.75em;
-      line-height: 1;
-      pointer-events: none;
-      user-select: none;
-      white-space: pre;
-    }
-    /* トグルONのときだけ、行全体に下余白を確保して重なりを防ぐ */
-    .typos-on .romaji-line {
-      padding-bottom: 1.1em; /* インジケータの高さぶんを確保 */
-    }
-
-    /* （お好み）2段ブロックのマージン */
-    .word-group {
-      display: inline-block;
-      margin-right: .4em;
-      margin-bottom: .3em;
-    }
-    .word-group .japanese-line {
-      color: var(--muted);
-      margin: 0 0 2px;
-      font-weight: 500;
-    }
-    .word-group .romaji-line {
-      margin: 0;
-    }
-  `;
-}
-
 
   // ========= 2段表示（トークン単位） =========
   function renderText({ animateCaret = false } = {}) {
     let html = "";
     let offset = 0;
+    const highlightOn = isHighlightOn(); // ← ハイライト状態を参照
 
     for (const item of TOKENS) {
       let romajiHTML = "";
@@ -179,7 +142,8 @@ function installTypoStyles() {
         if (st !== 0) classes.push("typed");
         if (st === 1) classes.push("correct");
         if (st === -1) classes.push("wrong");
-        if (isCurrent) classes.push("current");
+        // ハイライトOFF時は .current を付けない
+        if (isCurrent && highlightOn) classes.push("current");
         if (typoChar && toggleIndicateTypos?.checked) classes.push("has-typo");
 
         romajiHTML += `<span class="${classes.join(" ")}" data-index="${gi}">${ch}`;
@@ -245,14 +209,14 @@ function installTypoStyles() {
   }
 
   function updateCaretVisibility() {
-  caretEl.style.display = toggleCaret.checked ? "block" : "none";
-  if (toggleCaret.checked) {
-    updateCaret(false);
-    resumeCaretBlink(); // 表示時は点滅ONに戻す
-  } else {
-    if (caretBlinkTimer) clearTimeout(caretBlinkTimer);
+    caretEl.style.display = toggleCaret.checked ? "block" : "none";
+    if (toggleCaret.checked) {
+      updateCaret(false);
+      resumeCaretBlink();
+    } else {
+      if (caretBlinkTimer) clearTimeout(caretBlinkTimer);
+    }
   }
-}
 
   // ========= タイプ処理 =========
   function onTypedChar(inputChar) {
@@ -279,7 +243,7 @@ function installTypoStyles() {
     currentIndex++;
     renderText({ animateCaret: true });
     updateStatsUI();
-    pauseCaretBlink(); // ← これを追加
+    pauseCaretBlink();
 
     if (currentIndex >= TOTAL) {
       completeRun();
@@ -298,7 +262,7 @@ function installTypoStyles() {
 
     renderText({ animateCaret: true });
     updateStatsUI();
-    pauseCaretBlink(); // ← これを追加
+    pauseCaretBlink();
   }
 
   // ========= スタート／リセット／完了 =========
@@ -360,11 +324,8 @@ function installTypoStyles() {
     viewport.focus({ preventScroll: true });
   }
 
-  function onViewportClick() {
-    focusInput();
-  }
+  function onViewportClick() { focusInput(); }
 
-  // ghost-input（モバイル含む）
   function onGhostInput() {
     const val = ghostInput.value;
     if (!val) return;
@@ -376,8 +337,6 @@ function installTypoStyles() {
   }
 
   function onKeyDown(e) {
-    // グローバルで制御キー処理＋フォールバック入力
-    // 1) 制御キー
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     if (e.key === "Backspace") {
@@ -391,43 +350,37 @@ function installTypoStyles() {
       startRun();
       return;
     }
-    if (e.key === "Tab" || e.key === "Escape") {
-      // 既定動作のまま
-      return;
-    }
+    if (e.key === "Tab" || e.key === "Escape") return;
 
-    // 2) 印字可能キーのフォールバック
-    // ghost-input がフォーカスされていない場合に拾って処理
     if (isPrintableKey(e) && document.activeElement !== ghostInput) {
-      e.preventDefault(); // スクロールやフォーカス移動を防止
+      e.preventDefault();
       onTypedChar(e.key);
-      // 以後は ghost-input にフォーカスを戻す
       focusInput();
     }
   }
 
-  // 置き換え: トグルに応じて余白クラスを付け外し
-function updateIndicateTyposUI() {
-  if (lineTypo) {
-    lineTypo.setAttribute("aria-hidden", "true");
-    lineTypo.style.display = "none";
+  // ========= 表示トグル =========
+  function updateIndicateTyposUI() {
+    if (lineTypo) {
+      lineTypo.setAttribute("aria-hidden", "true");
+      lineTypo.style.display = "none";
+    }
+    lines.classList.toggle("typos-on", toggleIndicateTypos.checked);
+    renderText({ animateCaret: false });
   }
-  // ここを追加：ONのときだけ余白を付ける
-  lines.classList.toggle("typos-on", toggleIndicateTypos.checked);
-  renderText({ animateCaret: false });
-}
+
+  // 次の文字ハイライトのトグル（チェック→属性→再描画）
+  function updateCurrentHighlightUI() {
+    const on = toggleCurrentHighlight ? toggleCurrentHighlight.checked : false;
+    viewport.setAttribute("data-highlight-current", on ? "on" : "off");
+    renderText({ animateCaret: false }); // .current の付与/削除を反映
+  }
 
   function syncFontSize() {
     const size = Number(fontSizeSlider.value || 20);
     lines.style.fontSize = `${size}px`;
     updateCaret(false);
   }
-
-  function updateCurrentHighlightUI() {
-  // ONなら data-highlight-current="on"、OFFなら "off"
-  const on = toggleCurrentHighlight ? toggleCurrentHighlight.checked : true;
-  viewport.setAttribute("data-highlight-current", on ? "on" : "off");
-}
 
   // ========= 統計 =========
   function updateStatsUI() {
@@ -438,9 +391,7 @@ function updateIndicateTyposUI() {
     const now = performance.now();
     const elapsedMs = started || finished ? Math.max(1, (startTime ? now - startTime : 0)) : 0;
     const elapsedMin = elapsedMs / 60000;
-    if (elapsedMin > 0) {
-      wpm = Math.round((typed / 5) / elapsedMin);
-    }
+    if (elapsedMin > 0) wpm = Math.round((typed / 5) / elapsedMin);
 
     const correct = correctCount;
     const acc = typed > 0 ? Math.max(0, Math.min(100, Math.round((correct / typed) * 100))) : 100;
@@ -453,9 +404,7 @@ function updateIndicateTyposUI() {
   }
 
   // ========= リサイズ対応 =========
-  function onResize() {
-    updateCaret(false);
-  }
+  function onResize() { updateCaret(false); }
 
   // ========= イベントバインド =========
   function bindEvents() {
@@ -463,7 +412,6 @@ function updateIndicateTyposUI() {
       if (finished) resetRun({ rebuild: false });
       if (!started) startRun();
       focusInput();
-      toggleCurrentHighlight?.addEventListener("change", updateCurrentHighlightUI);
     });
 
     btnRestart?.addEventListener("click", () => {
@@ -473,30 +421,34 @@ function updateIndicateTyposUI() {
 
     toggleIndicateTypos?.addEventListener("change", updateIndicateTyposUI);
     toggleCaret?.addEventListener("change", updateCaretVisibility);
+    toggleCurrentHighlight?.addEventListener("change", updateCurrentHighlightUI); // ← ここで一度だけバインド
     fontSizeSlider?.addEventListener("input", syncFontSize);
 
     viewport?.addEventListener("click", onViewportClick);
     ghostInput?.addEventListener("input", onGhostInput);
-
-    // グローバル keydown: 制御キー処理とフォールバック入力
     document.addEventListener("keydown", onKeyDown);
-
     window.addEventListener("resize", onResize);
   }
 
   // ========= 初期化 =========
   function init() {
     installTypoStyles();
-    updateIndicateTyposUI();
-    renderText({ animateCaret: false });
+
+    // 初期の「次の文字ハイライト」状態を決定（属性が無ければオフで統一）
+    if (viewport.hasAttribute("data-highlight-current")) {
+      const on = viewport.getAttribute("data-highlight-current") !== "off";
+      if (toggleCurrentHighlight) toggleCurrentHighlight.checked = on;
+    } else {
+      viewport.setAttribute("data-highlight-current", "off"); // 初期はオフ
+      if (toggleCurrentHighlight) toggleCurrentHighlight.checked = false;
+    }
+
+    updateIndicateTyposUI(); // これが renderText も呼ぶ
     bindEvents();
     updateStatsUI();
     updateCaretVisibility();
     syncFontSize();
-    resumeCaretBlink(); // ← 初期は点滅させておく
-    updateCurrentHighlightUI();
-
-    // 初期フォーカスを与えて、入力開始ですぐ反応するように
+    resumeCaretBlink();
     focusInput();
 
     viewport.setAttribute("aria-label", "トークン単位の2段表示（上：日本語、下：ローマ字）。ローマ字入力で判定します。");
@@ -507,5 +459,4 @@ function updateIndicateTyposUI() {
   } else {
     init();
   }
-
 })();
