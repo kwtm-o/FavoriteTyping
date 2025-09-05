@@ -183,7 +183,7 @@
     caretEl.style.willChange = "transform, height";
     caretEl.style.pointerEvents = "none";
     caretEl.style.background = "var(--caret-color, currentColor)";
-    caretEl.style.width = "2px";
+    caretEl.style.width = "1.45px";
     caretEl.style.borderRadius = "1px";
     caretEl.style.opacity = "1";
     caretEl.style.transition = animated ? "transform 120ms ease, height 120ms ease" : "none";
@@ -460,4 +460,5 @@
     init();
   }
 })();
+
 
