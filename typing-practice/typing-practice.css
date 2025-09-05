@@ -86,7 +86,7 @@ html, body {
   grid-column-end: content;
 
   /* 行の自動配置（必要なら明示も可） */
-  grid-row: auto;
+  grid-row: 2;
 
   /* 余計な外側余白を消す */
   margin: 0;
@@ -354,3 +354,4 @@ button:focus-visible {
   border-radius: 6px;
 
 }
+
