@@ -221,6 +221,12 @@ html, body {
   outline: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
   border-radius: 4px;
 }
+/* 次の文字ハイライト OFF のときにだけ、装飾を無効化 */
+#viewport[data-highlight-current="off"] .char.current {
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
 .char.correct {
   color: var(--good);
 }
@@ -353,5 +359,6 @@ button:focus-visible {
   border-radius: 6px;
 
 }
+
 
 
