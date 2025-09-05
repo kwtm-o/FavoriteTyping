@@ -16,6 +16,7 @@
   const btnRestart = $("#btn-restart");
   const toggleIndicateTypos = $("#toggle-indicate-typos");
   const toggleCaret = $("#toggle-caret");
+  const toggleCurrentHighlight = $("#toggle-current-highlight");
   const fontSizeSlider = $("#font-size");
 
   const statWpm = $("#wpm");
@@ -422,6 +423,12 @@ function updateIndicateTyposUI() {
     updateCaret(false);
   }
 
+  function updateCurrentHighlightUI() {
+  // ONなら data-highlight-current="on"、OFFなら "off"
+  const on = toggleCurrentHighlight ? toggleCurrentHighlight.checked : true;
+  viewport.setAttribute("data-highlight-current", on ? "on" : "off");
+}
+
   // ========= 統計 =========
   function updateStatsUI() {
     const typed = currentIndex;
@@ -456,6 +463,7 @@ function updateIndicateTyposUI() {
       if (finished) resetRun({ rebuild: false });
       if (!started) startRun();
       focusInput();
+      toggleCurrentHighlight?.addEventListener("change", updateCurrentHighlightUI);
     });
 
     btnRestart?.addEventListener("click", () => {
@@ -486,6 +494,7 @@ function updateIndicateTyposUI() {
     updateCaretVisibility();
     syncFontSize();
     resumeCaretBlink(); // ← 初期は点滅させておく
+    updateCurrentHighlightUI();
 
     // 初期フォーカスを与えて、入力開始ですぐ反応するように
     focusInput();
@@ -498,4 +507,5 @@ function updateIndicateTyposUI() {
   } else {
     init();
   }
+
 })();
