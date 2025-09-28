@@ -180,7 +180,7 @@ html, body {
 
 /* 状態表示 */
 .char {
-  color: color-mix(in oklab, var(--fg) 84%, transparent);
+  color: var(--muted);
   transition: background-color 120ms ease, color 120ms ease, text-decoration-color 120ms ease;
 }
 .char.current {
@@ -195,7 +195,7 @@ html, body {
   box-shadow: none !important;
 }
 .char.correct {
-  color: var(--good);
+  color: var(--fg);
 }
 .char.wrong {
   color: var(--bad);
@@ -326,6 +326,7 @@ button:focus-visible {
   border-radius: 6px;
 
 }
+
 
 
 
