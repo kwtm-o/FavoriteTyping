@@ -151,32 +151,6 @@ html, body {
   line-height: 1.8;
 }
 
-/* ========== 日本語行の3段階状態 ========== */
-.japanese-text {
-  transition: color 0.25s ease, background-color 0.25s ease, outline-color 0.25s ease;
-}
-
-/* 未入力（デフォルト） */
-.japanese-text {
-  color: var(--muted);
-}
-
-/* 入力途中（ハイライト中） */
-.japanese-text.partial {
-  color: var(--fg);
-  background: color-mix(in oklab, var(--accent) 18%, transparent);
-  outline: 1px solid color-mix(in oklab, var(--accent) 40%, transparent);
-  border-radius: 4px;
-  padding: 0 2px; /* 少し余白をつけると綺麗 */
-}
-
-/* 入力完了（濃い） */
-.japanese-text.done {
-  color: var(--fg);
-  background: transparent;
-  outline: none;
-}
-
 /* ローマ字（下段：判定対象） */
 .romaji-line {
   margin: 0;
@@ -352,6 +326,7 @@ button:focus-visible {
   border-radius: 6px;
 
 }
+
 
 
 
