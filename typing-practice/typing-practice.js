@@ -131,18 +131,12 @@
 
     for (const item of TOKENS) {
       let romajiHTML = "";
-      let typedCount = 0;
-      let allTyped = true;
-
       for (let i = 0; i < item.romaji.length; i++) {
         const gi = offset + i;
         const ch = escapeHtml(item.romaji[i]);
         const st = states[gi] || 0;
         const isCurrent = gi === currentIndex;
         const typoChar = typos[gi];
-
-        if (st !== 0) typedCount++;
-        if (st === 0) allTyped = false;
 
         const classes = ["char"];
         if (st !== 0) classes.push("typed");
@@ -160,19 +154,9 @@
       }
       offset += item.romaji.length;
 
-      
-  +   // 日本語側クラス決定（3段階）
-  +   let jpClass = "japanese-text japanese-line";
-  +   if (allTyped) {
-  +     jpClass += " done";
-  +   } else if (typedCount > 0) {
-  +     jpClass += " partial";
-  +   }
-
       html += `
         <span class="word-group">
-          <div class="${jpClass}">${escapeHtml(item.japanese)}</div>
-
+          <div class="japanese-text japanese-line">${escapeHtml(item.japanese)}</div>
           <div class="romaji-text romaji-line">${romajiHTML}</div>
         </span>
       `;
@@ -476,7 +460,6 @@
     init();
   }
 })();
-
 
 
 
