@@ -5,46 +5,28 @@
 *::before,
 *::after { box-sizing: border-box; }
 
+/* ==== dmg風ダークテーマ ==== */
 :root {
-  --bg: #0e1116;
-  --bg-elev: #141922;
-  --fg: #e6eaf2;
-  --muted: #a7b0c0;
-  --accent: #7aa2f7;
-  --good: #78dba9;
-  --bad: #ff6b6b;
-  --warn: #f6c177;
-  --caret-color: #e6eaf2;
-  --border: #2a3241;
-  --surface: #11151c;
-
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-               Roboto, "Noto Sans JP", "Hiragino Kaku Gothic ProN",
-               "Yu Gothic UI", "Yu Gothic", Meiryo, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-               "Liberation Mono", "Noto Sans Mono", "Cascadia Code", monospace;
-
+  --bg: #1e1e2e;
+  --bg-elev: #181825;
+  --surface: #11111b;
+  --fg: #cdd6f4;
+  --muted: #a6adc8;
+  --accent: #f38ba8;
+  --good: #a6e3a1;
+  --bad: #f38ba8;
+  --warn: #f9e2af;
+  --caret-color: #f38ba8;
+  --border: #313244;
+  --shadow: 0 10px 30px rgba(0,0,0,0.4);
+  --font-sans: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
   --radius: 10px;
   --pad: 16px;
   --gap: 12px;
-  --shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
-
 @media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f6f7fb;
-    --bg-elev: #ffffff;
-    --fg: #111318;
-    --muted: #5a6473;
-    --accent: #3366ff;
-    --good: #16a34a;
-    --bad: #e11d48;
-    --warn: #b45309;
-    --caret-color: #111318;
-    --border: #e6e8ef;
-    --surface: #ffffff;
-    --shadow: 0 8px 20px rgba(0,0,0,0.08);
-  }
+  :root { color-scheme: dark; }
 }
 
 /* ========== 全体レイアウト ========== */
@@ -326,6 +308,7 @@ button:focus-visible {
   border-radius: 6px;
 
 }
+
 
 
 
