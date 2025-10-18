@@ -1,124 +1,108 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Typing Practice</title>
-  <link rel="stylesheet" href="./style.css">
-</head>
-<body>
-  <div id="typing-app">
-    <!-- ヘッダー／操作パネル -->
-    <header class="topbar" role="banner">
-      <h1 class="app-title" id="article-title">Typing Practice</h1>
-      <nav class="controls" aria-label="コントロール">
-        <button id="btn-start" class="btn" aria-pressed="false">開始</button>
-        <button id="btn-restart" class="btn" aria-pressed="false">リスタート</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Japanese + Romaji Typing Practice</title>
+    <link rel="stylesheet" href="./typing-practice.css" />
+    <meta name="color-scheme" content="light dark" />
+  </head>
+  <body>
+    <div id="typing-app">
+      <!-- ヘッダー／操作パネル -->
+      <header class="topbar" role="banner">
+        <h1 class="app-title" id="article-title">Typing Practice (JA + Romaji)</h1>
+        <nav class="controls" aria-label="コントロール">
+          <button id="btn-start" class="btn" aria-pressed="false">開始</button>
+          <button id="btn-restart" class="btn" aria-pressed="false">リスタート</button>
 
-        <label class="ctrl">
-          <input id="toggle-indicate-typos" type="checkbox" checked />
-          ミスタイプを文字の下に表示
-        </label>
+          <label class="ctrl">
+            <input id="toggle-indicate-typos" type="checkbox" checked />
+            ミスタイプを文字の下に表示
+          </label>
 
-        <label class="ctrl">
-          <input id="toggle-current-highlight" type="checkbox" />
-          次の文字をハイライト
-        </label>
+          <label class="ctrl">
+            <input id="toggle-current-highlight" type="checkbox" />
+            次の文字をハイライト
+          </label>
 
-        <label class="ctrl">
-          <input id="toggle-caret" type="checkbox" checked />
-          キャレット表示
-        </label>
+          <label class="ctrl">
+            <input id="toggle-caret" type="checkbox" checked />
+            キャレット表示
+          </label>
 
-        <label class="ctrl">
-          文字サイズ
-          <input id="font-size" type="range" min="14" max="32" value="20" />
-        </label>
-      </nav>
-    </header>
+          <label class="ctrl">
+            文字サイズ
+            <input id="font-size" type="range" min="14" max="32" value="20" />
+          </label>
+        </nav>
+      </header>
 
-    <!-- メインのタイピング領域 -->
-    <main id="viewport"
-          class="typing-viewport"
-          role="application"
-          aria-roledescription="タイピング練習"
-          aria-label="日本語とローマ字の2段表示。ローマ字入力で判定します。"
-          data-judge="romaji"
-          data-indicate-typos="true"
-          tabindex="0">
-      <section class="display" aria-live="off" aria-atomic="false">
-        <div id="lines" class="lines"></div>
-        <div id="caret" class="caret" aria-hidden="true"></div>
+      <!-- メインのタイピング領域 -->
+      <main id="viewport"
+            class="typing-viewport"
+            role="application"
+            aria-roledescription="タイピング練習"
+            aria-label="日本語とローマ字の2段表示。ローマ字入力で判定します。"
+            data-judge="romaji"
+            data-indicate-typos="true"
+            tabindex="0">
+
+        <!-- 画面表示レイヤ群 -->
+        <section class="display" aria-live="off" aria-atomic="false">
+          <div id="lines" class="lines">
+            <div id="line-japanese" class="line japanese-line"></div>
+            <div id="line-romaji" class="line romaji-line"></div>
+            <div id="line-typo" class="line typo-line" aria-hidden="true"></div>
+          </div>
+
+          <div id="caret" class="caret" aria-hidden="true" data-animated="true"></div>
+        </section>
+
+        <!-- スクリーンリーダー向け -->
+        <p id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+
+        <!-- 入力取得用の不可視テキスト入力 -->
+        <input id="ghost-input"
+               class="ghost-input"
+               type="text"
+               inputmode="latin"
+               autocomplete="off"
+               autocorrect="off"
+               autocapitalize="off"
+               spellcheck="false"
+               aria-hidden="true" />
+      </main>
+
+      <!-- 統計・進捗表示 -->
+      <section class="stats" aria-label="成績">
+        <div class="stat">
+          <strong id="wpm">0</strong>
+          <span class="label">WPM</span>
+        </div>
+        <div class="stat">
+          <strong id="accuracy">100%</strong>
+          <span class="label">正確性</span>
+        </div>
+        <div class="stat">
+          <strong id="errors">0</strong>
+          <span class="label">ミス</span>
+        </div>
+        <div class="stat">
+          <strong id="progress">0%</strong>
+          <span class="label">進捗</span>
+        </div>
       </section>
 
-      <p id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+      <footer class="footer">
+        <p class="hint">
+          フォーカス（クリック or Tab）後にキーボードで入力してください。<br />
+          ミスタイプはローマ字行の下段に表示されます。
+        </p>
+        <p><a href="index.html" class="back-link">← 原稿リストに戻る</a></p>
+      </footer>
+    </div>
 
-      <input id="ghost-input"
-             class="ghost-input"
-             type="text"
-             inputmode="latin"
-             autocomplete="off"
-             autocorrect="off"
-             autocapitalize="off"
-             spellcheck="false"
-             aria-hidden="true" />
-    </main>
-
-    <!-- 統計・進捗表示 -->
-    <section class="stats" aria-label="成績">
-      <div class="stat"><strong id="wpm">0</strong><span class="label">WPM</span></div>
-      <div class="stat"><strong id="accuracy">100%</strong><span class="label">正確性</span></div>
-      <div class="stat"><strong id="errors">0</strong><span class="label">ミス</span></div>
-      <div class="stat"><strong id="progress">0%</strong><span class="label">進捗</span></div>
-    </section>
-
-    <footer class="footer">
-      <p class="hint">
-        フォーカス（クリック or Tab）後にキーボードで入力してください。<br>
-        ローマ字で判定します。ミスタイプは下段に表示されます。
-      </p>
-      <p><a href="index.html" class="back-link">← 原稿リストに戻る</a></p>
-    </footer>
-  </div>
-
-  <script type="module">
-    import { initTypingApp } from './script.js';
-
-    // URLクエリからarticle IDを取得
-    const params = new URLSearchParams(location.search);
-    const articleId = params.get('article');
-
-    async function loadArticleAndStart() {
-      try {
-        const res = await fetch('./articles.json');
-        if (!res.ok) throw new Error('articles.json の読み込みに失敗しました');
-        const articles = await res.json();
-        const target = articles.find(a => a.id === articleId);
-
-        if (!target) {
-          document.body.innerHTML = `
-            <main style="text-align:center; margin-top:3em;">
-              <h2>該当する原稿が見つかりません。</h2>
-              <p><a href="index.html">原稿リストに戻る</a></p>
-            </main>
-          `;
-          return;
-        }
-
-        document.getElementById('article-title').textContent = target.title;
-        initTypingApp(target.data);
-      } catch (err) {
-        console.error(err);
-        document.body.innerHTML = `
-          <main style="text-align:center; margin-top:3em;">
-            <h2>データ読み込みエラーが発生しました。</h2>
-            <p><a href="index.html">原稿リストに戻る</a></p>
-          </main>
-        `;
-      }
-    }
-
-    loadArticleAndStart();
-  </script>
-</body>
+    <script type="module" src="./script.js"></script>
+  </body>
 </html>
