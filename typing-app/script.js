@@ -1,245 +1,164 @@
-// script.js
-// 共通スクリプト：タイピング練習アプリの中核処理
-// index.html（記事リスト）では使われず、typing.htmlで initTypingApp(data) が呼ばれる
+// script.js — オリジナルUI版
+(async () => {
+  // DOM参照
+  const $ = (sel) => document.querySelector(sel);
+  const viewport = $("#viewport");
+  const jaLine = $("#line-japanese");
+  const roLine = $("#line-romaji");
+  const typoLine = $("#line-typo");
+  const caret = $("#caret");
+  const ghostInput = $("#ghost-input");
+  const wpmEl = $("#wpm");
+  const accEl = $("#accuracy");
+  const errEl = $("#errors");
+  const progEl = $("#progress");
 
-export function initTypingApp(tokens) {
-  // ========= DOM参照 =========
-  const viewport = document.querySelector("#viewport");
-  const lines = document.querySelector("#lines");
-  const caretEl = document.querySelector("#caret");
-  const liveRegion = document.querySelector("#live-region");
-  const ghostInput = document.querySelector("#ghost-input");
+  // コントロール類
+  const btnStart = $("#btn-start");
+  const btnRestart = $("#btn-restart");
+  const chkTypos = $("#toggle-indicate-typos");
+  const chkCaret = $("#toggle-caret");
+  const chkHighlight = $("#toggle-current-highlight");
+  const fontSize = $("#font-size");
 
-  const btnStart = document.querySelector("#btn-start");
-  const btnRestart = document.querySelector("#btn-restart");
-  const toggleIndicateTypos = document.querySelector("#toggle-indicate-typos");
-  const toggleCaret = document.querySelector("#toggle-caret");
-  const toggleCurrentHighlight = document.querySelector("#toggle-current-highlight");
-  const fontSizeSlider = document.querySelector("#font-size");
+  // URLから原稿ID取得
+  const params = new URLSearchParams(location.search);
+  const id = params.get("article") || "kotowaza";
 
-  const statWpm = document.querySelector("#wpm");
-  const statAccuracy = document.querySelector("#accuracy");
-  const statErrors = document.querySelector("#errors");
-  const statProgress = document.querySelector("#progress");
+  // データ読み込み
+  const articles = await fetch("./articles.json").then(r => r.json());
+  const target = articles.find(a => a.id === id);
+  const TOKENS = target ? target.data : [{ japanese: "データなし", romaji: "datanashi" }];
 
-  // ========= データと状態 =========
-  const TOKENS = tokens;
+  // 状態変数
   let ROMAJI = TOKENS.map(t => t.romaji).join("");
   const TOTAL = ROMAJI.length;
+  let states = new Int8Array(TOTAL);
+  let typos = {};
+  let idx = 0, correct = 0, errors = 0, startTime = 0, started = false, finished = false;
 
-  let states = new Int8Array(TOTAL); // 0:未入力, 1:正解, -1:ミス
-  let typos = Object.create(null);   // index -> last wrong char
-  let charSpans = [];
+  // テキスト描画
+  function render() {
+    const jp = TOKENS.map(t => t.japanese).join("");
+    jaLine.textContent = jp;
 
-  let currentIndex = 0;
-  let started = false;
-  let finished = false;
-  let startTime = 0;
-  let timerId = null;
-  let correctCount = 0;
-  let errorCount = 0;
-
-  // ========= キャレット点滅制御 =========
-  const CARET_IDLE_MS = 650;
-  let caretBlinkTimer = null;
-
-  function setCaretBlink(on) {
-    caretEl.setAttribute("data-blink", on ? "on" : "off");
-  }
-  function pauseCaretBlink() {
-    setCaretBlink(false);
-    clearTimeout(caretBlinkTimer);
-    caretBlinkTimer = setTimeout(() => setCaretBlink(true), CARET_IDLE_MS);
-  }
-
-  // ========= 表示関連 =========
-  function renderText({ animateCaret = false } = {}) {
-    let html = "";
-    let offset = 0;
-    const highlightOn = toggleCurrentHighlight?.checked;
-
-    for (const item of TOKENS) {
-      let romajiHTML = "";
-      for (let i = 0; i < item.romaji.length; i++) {
-        const gi = offset + i;
-        const ch = item.romaji[i];
-        const st = states[gi];
-        const isCurrent = gi === currentIndex;
-        const typoChar = typos[gi];
-        const classes = ["char"];
-        if (st === 1) classes.push("correct");
-        if (st === -1) classes.push("wrong");
-        if (isCurrent && highlightOn) classes.push("current");
-
-        romajiHTML += `<span class="${classes.join(" ")}" data-index="${gi}">${ch}`;
-        if (typoChar && toggleIndicateTypos?.checked) {
-          romajiHTML += `<span class="typo-indicator">${typoChar}</span>`;
-        }
-        romajiHTML += `</span>`;
-      }
-      offset += item.romaji.length;
-
-      html += `
-        <span class="word-group">
-          <div class="japanese-text japanese-line">${item.japanese}</div>
-          <div class="romaji-text romaji-line">${romajiHTML}</div>
-        </span>
-      `;
+    const roHtml = [];
+    for (let i = 0; i < ROMAJI.length; i++) {
+      const ch = ROMAJI[i];
+      const st = states[i];
+      const cur = i === idx;
+      const typo = typos[i];
+      let cls = "char";
+      if (st === 1) cls += " correct";
+      else if (st === -1) cls += " wrong";
+      if (cur && chkHighlight.checked) cls += " current";
+      roHtml.push(`<span class="${cls}" data-i="${i}">${ch}</span>`);
     }
-
-    lines.innerHTML = html;
-
-    // 各文字要素の参照リストを再構築
-    const tmp = Array.from(lines.querySelectorAll(".romaji-line .char"));
-    const ordered = new Array(TOTAL);
-    for (const el of tmp) ordered[Number(el.dataset.index)] = el;
-    charSpans = ordered;
-
-    updateCaret(animateCaret);
+    roLine.innerHTML = roHtml.join("");
+    typoLine.innerHTML = Object.keys(typos).length && chkTypos.checked
+      ? Object.values(typos).join("")
+      : "";
+    updateCaret();
   }
 
-  function updateCaret(animated = true) {
-    if (!toggleCaret.checked) return;
-    const target = charSpans[currentIndex] || charSpans[charSpans.length - 1];
-    if (!target) return;
-
-    const baseRect = lines.getBoundingClientRect();
-    const rect = target.getBoundingClientRect();
-    const x = rect.left - baseRect.left;
-    const y = rect.top - baseRect.top;
-
-    caretEl.style.transform = `translate(${x}px, ${y}px)`;
-    caretEl.style.height = `${rect.height}px`;
-    caretEl.style.transition = animated ? "transform 120ms ease, height 120ms ease" : "none";
+  // キャレット移動
+  function updateCaret() {
+    if (!chkCaret.checked) { caret.style.display = "none"; return; }
+    caret.style.display = "block";
+    const charEl = roLine.querySelector(`[data-i="${idx}"]`);
+    if (!charEl) return;
+    const rect = charEl.getBoundingClientRect();
+    const base = roLine.getBoundingClientRect();
+    caret.style.transform = `translate(${rect.left - base.left}px, ${rect.top - base.top}px)`;
+    caret.style.height = `${rect.height}px`;
   }
 
-  // ========= タイプ処理 =========
-  function onTypedChar(ch) {
-    if (finished) return;
+  // 入力処理
+  function handleInput(ch) {
     if (!started) startRun();
-
-    const expected = ROMAJI[currentIndex];
-    if (!expected) return;
-
-    const isCorrect = ch.toLowerCase() === expected.toLowerCase();
-    if (isCorrect) {
-      states[currentIndex] = 1;
-      correctCount++;
-      delete typos[currentIndex];
+    const expect = ROMAJI[idx];
+    if (expect == null) return;
+    if (ch.toLowerCase() === expect.toLowerCase()) {
+      states[idx] = 1;
+      correct++;
+      delete typos[idx];
     } else {
-      states[currentIndex] = -1;
-      errorCount++;
-      if (toggleIndicateTypos.checked) typos[currentIndex] = ch;
+      states[idx] = -1;
+      errors++;
+      typos[idx] = ch;
     }
-
-    currentIndex++;
-    renderText({ animateCaret: true });
-    updateStatsUI();
-    pauseCaretBlink();
-
-    if (currentIndex >= TOTAL) completeRun();
+    idx++;
+    render();
+    updateStats();
+    if (idx >= TOTAL) finishRun();
   }
 
-  function handleBackspace() {
-    if (currentIndex <= 0) return;
-    currentIndex--;
-    if (states[currentIndex] === 1) correctCount--;
-    if (states[currentIndex] === -1) errorCount--;
-    states[currentIndex] = 0;
-    delete typos[currentIndex];
-    renderText({ animateCaret: true });
-    updateStatsUI();
+  function handleBack() {
+    if (idx <= 0) return;
+    idx--;
+    if (states[idx] === 1) correct--;
+    if (states[idx] === -1) errors--;
+    states[idx] = 0;
+    delete typos[idx];
+    render();
+    updateStats();
   }
 
-  // ========= 統計・UI制御 =========
-  function updateStatsUI() {
-    const typed = currentIndex;
-    const errors = errorCount;
-    const elapsedMin = (performance.now() - startTime) / 60000;
-    const wpm = elapsedMin > 0 ? Math.round((typed / 5) / elapsedMin) : 0;
-    const acc = typed > 0 ? Math.round((correctCount / typed) * 100) : 100;
-    const prog = TOTAL > 0 ? Math.round((typed / TOTAL) * 100) : 0;
-
-    statWpm.textContent = wpm;
-    statAccuracy.textContent = acc + "%";
-    statErrors.textContent = errors;
-    statProgress.textContent = prog + "%";
+  // 統計
+  function updateStats() {
+    const elapsed = (performance.now() - startTime) / 60000;
+    const wpm = elapsed > 0 ? Math.round((idx / 5) / elapsed) : 0;
+    const acc = idx > 0 ? Math.round((correct / idx) * 100) : 100;
+    const prog = Math.round((idx / TOTAL) * 100);
+    wpmEl.textContent = wpm;
+    accEl.textContent = acc + "%";
+    errEl.textContent = errors;
+    progEl.textContent = prog + "%";
   }
 
+  // 開始／終了
   function startRun() {
     started = true;
-    startTime = performance.now();
-    btnStart.setAttribute("aria-pressed", "true");
-    timerId = setInterval(updateStatsUI, 200);
-    ghostInput.focus({ preventScroll: true });
-  }
-
-  function resetRun() {
-    clearInterval(timerId);
-    started = false;
     finished = false;
-    startTime = 0;
-    currentIndex = 0;
-    correctCount = 0;
-    errorCount = 0;
-    states.fill(0);
-    typos = Object.create(null);
-    renderText({ animateCaret: false });
-    updateStatsUI();
+    startTime = performance.now();
   }
-
-  function completeRun() {
+  function finishRun() {
     finished = true;
-    clearInterval(timerId);
-    liveRegion.textContent = "完了しました。お疲れさまでした。";
     ghostInput.blur();
   }
+  function resetRun() {
+    states.fill(0);
+    typos = {};
+    idx = 0;
+    correct = 0;
+    errors = 0;
+    started = false;
+    finished = false;
+    render();
+    updateStats();
+  }
 
-  // ========= イベント =========
-  btnStart.addEventListener("click", () => {
-    if (!started) startRun();
-  });
-
-  btnRestart.addEventListener("click", () => {
-    resetRun();
-    startRun();
-  });
-
-  fontSizeSlider.addEventListener("input", () => {
-    lines.style.fontSize = `${fontSizeSlider.value}px`;
-    updateCaret(false);
-  });
-
-  toggleCaret.addEventListener("change", () => {
-    caretEl.style.display = toggleCaret.checked ? "block" : "none";
-    updateCaret(false);
-  });
-
-  toggleCurrentHighlight.addEventListener("change", () => {
-    renderText({ animateCaret: false });
-  });
-
-  toggleIndicateTypos.addEventListener("change", () => {
-    renderText({ animateCaret: false });
-  });
-
+  // イベント
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (finished) return;
     if (e.key === "Backspace") {
       e.preventDefault();
-      handleBackspace();
-    } else if (e.key.length === 1 && !e.isComposing) {
-      onTypedChar(e.key);
+      handleBack();
+    } else if (e.key.length === 1 && !e.metaKey && !e.ctrlKey) {
+      handleInput(e.key);
     }
   });
+  btnStart.addEventListener("click", startRun);
+  btnRestart.addEventListener("click", resetRun);
+  fontSize.addEventListener("input", () => {
+    roLine.style.fontSize = fontSize.value + "px";
+  });
+  chkHighlight.addEventListener("change", render);
+  chkTypos.addEventListener("change", render);
+  chkCaret.addEventListener("change", render);
+  window.addEventListener("resize", updateCaret);
 
-  window.addEventListener("resize", () => updateCaret(false));
-  viewport.addEventListener("click", () => ghostInput.focus());
-
-  // ========= 初期化 =========
-  renderText();
-  updateStatsUI();
-  updateCaret(false);
-  setCaretBlink(true);
-  ghostInput.focus();
-}
+  // 初期化
+  render();
+  updateStats();
+})();
