@@ -1,0 +1,48 @@
+[
+  {
+    "id": "kotowaza",
+    "title": "ことわざ練習",
+    "description": "日本のことわざを題材にした基本練習です。",
+    "data": [
+      { "japanese": "ことわざは", "romaji": "kotowazaha" },
+      { "japanese": "昔", "romaji": "mukashi" },
+      { "japanese": "から", "romaji": "kara" },
+      { "japanese": "言い伝え", "romaji": "iitutae" },
+      { "japanese": "られてきた", "romaji": "raretekita" },
+      { "japanese": "教訓", "romaji": "kyoukunn" },
+      { "japanese": "や", "romaji": "ya" },
+      { "japanese": "知識", "romaji": "tisiki" },
+      { "japanese": "などを", "romaji": "nadowo" },
+      { "japanese": "ふくんだ", "romaji": "hukunnda" },
+      { "japanese": "短い", "romaji": "mizikai" },
+      { "japanese": "言葉", "romaji": "kotoba" },
+      { "japanese": "です。", "romaji": "desu." }
+    ]
+  },
+  {
+    "id": "aisatsu",
+    "title": "あいさつ練習",
+    "description": "日常会話の基本となるあいさつ表現を練習します。",
+    "data": [
+      { "japanese": "おはよう", "romaji": "ohayou" },
+      { "japanese": "こんにちは", "romaji": "konnichiwa" },
+      { "japanese": "こんばんは", "romaji": "konbanwa" },
+      { "japanese": "おやすみなさい", "romaji": "oyasuminasai" },
+      { "japanese": "ありがとう", "romaji": "arigatou" },
+      { "japanese": "さようなら", "romaji": "sayounara" }
+    ]
+  },
+  {
+    "id": "animal",
+    "title": "どうぶつの名前",
+    "description": "身近などうぶつの名前を使ってローマ字入力を練習します。",
+    "data": [
+      { "japanese": "いぬ", "romaji": "inu" },
+      { "japanese": "ねこ", "romaji": "neko" },
+      { "japanese": "うま", "romaji": "uma" },
+      { "japanese": "とり", "romaji": "tori" },
+      { "japanese": "さる", "romaji": "saru" },
+      { "japanese": "ぞう", "romaji": "zou" }
+    ]
+  }
+]
