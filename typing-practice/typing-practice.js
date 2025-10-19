@@ -48,12 +48,13 @@
 
   // ========= データ読込（articles.json専用） =========
 async function loadData() {
-  const res = await fetch('./articles.json');  // 同じフォルダにarticles.jsonを置く
-  if (!res.ok) {
-    throw new Error('articles.json の読み込みに失敗しました');
-  }
+  const urlParams = new URLSearchParams(window.location.search);
+  const id = urlParams.get('id'); // ?id=xxx
+  const res = await fetch('./articles.json');
   const json = await res.json();
-  return json;
+
+  const article = json.find(a => a.id === id) || json[0];
+  return article.tokens; // tokens配列を返す
 }
 
 // ========= 初期化 =========
@@ -465,6 +466,7 @@ loadData()
     init();
   }
 })();
+
 
 
 
