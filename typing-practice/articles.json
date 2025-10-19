@@ -1,15 +1,19 @@
 [
-  { "japanese": "ことわざは", "romaji": "kotowazaha" },
-  { "japanese": "昔", "romaji": "mukasi" },
-  { "japanese": "から", "romaji": "kara" },
-  { "japanese": "言い伝え", "romaji": "iitutae" },
-  { "japanese": "られてきた", "romaji": "raretekita" },
-  { "japanese": "教訓", "romaji": "kyoukunn" },
-  { "japanese": "や", "romaji": "ya" },
-  { "japanese": "知識", "romaji": "tisiki" },
-  { "japanese": "などを", "romaji": "nadowo" },
-  { "japanese": "ふくんだ", "romaji": "hukunnda" },
-  { "japanese": "短い", "romaji": "mizikai" },
-  { "japanese": "言葉", "romaji": "kotoba" },
-  { "japanese": "です。", "romaji": "desu." }
+  {
+    "id": "001",
+    "title": "ことわざの説明",
+    "tokens": [
+      { "japanese": "ことわざは", "romaji": "kotowazaha" },
+      { "japanese": "昔", "romaji": "mukashi" }
+    ]
+  },
+  {
+    "id": "002",
+    "title": "季節の挨拶",
+    "tokens": [
+      { "japanese": "春", "romaji": "haru" },
+      { "japanese": "が", "romaji": "ga" },
+      { "japanese": "来ました", "romaji": "kimashita" }
+    ]
+  }
 ]
