@@ -112,11 +112,30 @@
         </p>
       </footer>
     </div>
+    <script type="module">
+  async function loadArticle() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const res = await fetch('./articles.json');
+    const articles = await res.json();
+    const article = articles.find(a => a.id === id);
+    if (!article) {
+      alert('記事が見つかりません');
+      return;
+    }
+
+    // グローバル変数に格納して typing-practice.js に渡す
+    window.JA_ROMAJI_DATA = article.tokens;
+  }
+
+  await loadArticle();
+</script>
 
     <!-- 実装（キャレット移動、ミスタイプ表示、2段描画、判定ロジックなど） -->
     <script type="module" src="./typing-practice.js"></script>
   </body>
 
 </html>
+
 
 
