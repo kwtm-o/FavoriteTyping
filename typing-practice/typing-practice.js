@@ -9,7 +9,6 @@
   const viewport = $("#viewport");
   const lines = $("#lines");
   const caretEl = $("#caret");
-  const liveRegion = $("#live-region");
   const ghostInput = $("#ghost-input");
 
   const btnStart = $("#btn-start");
@@ -17,14 +16,11 @@
   const toggleIndicateTypos = $("#toggle-indicate-typos");
   const toggleCaret = $("#toggle-caret");
   const toggleCurrentHighlight = $("#toggle-current-highlight");
-  const fontSizeSlider = $("#font-size");
 
   const statWpm = $("#wpm");
   const statAccuracy = $("#accuracy");
   const statErrors = $("#errors");
   const statProgress = $("#progress");
-
-  const lineTypo = $("#line-typo");
 
   // ========= ユーティリティ =========
   function escapeHtml(str) {
@@ -48,10 +44,15 @@
     return viewport.getAttribute("data-highlight-current") !== "off";
   }
 
+  // ========= 隠し入力欄にフォーカス =========
+  function focusInput() {
+    if (ghostInput) ghostInput.focus();
+  }
+
   // ========= データ読込（articles.jsonからid指定で取得） =========
   async function loadData() {
     const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get("id"); // URLパラメータからid取得
+    const id = urlParams.get("id");
     const res = await fetch("./articles.json");
     if (!res.ok) throw new Error("articles.json の読み込みに失敗しました");
 
@@ -60,7 +61,7 @@
     console.log("📄 選択された原稿:", article.title);
     console.log("✅ tokens数:", article.tokens.length);
 
-    return article.tokens; // tokens配列を返す
+    return article.tokens;
   }
 
   // ========= グローバル変数 =========
@@ -243,7 +244,6 @@
   function startRun() {
     if (finished) return;
     started = true;
-    btnStart.setAttribute("aria-pressed", "true");
     if (!startTime) startTime = performance.now();
     if (timerId) clearInterval(timerId);
     timerId = setInterval(updateStatsUI, 200);
@@ -259,7 +259,6 @@
     currentIndex = 0;
     correctCount = 0;
     errorCount = 0;
-    btnStart.setAttribute("aria-pressed", "false");
 
     states = new Int8Array(TOTAL);
     typos = Object.create(null);
@@ -322,32 +321,30 @@
   }
 
   // ========= 初期化 =========
-async function init() {
-  installTypoStyles();
+  async function init() {
+    installTypoStyles();
 
-  try {
-    TOKENS = await loadData(); // ✅ 読み込み完了を待つ
+    try {
+      TOKENS = await loadData();
+      // 全トークンをreduceで正確に結合
+      ROMAJI = TOKENS.reduce((acc, t) => acc + t.romaji, "");
+      TOTAL = ROMAJI.length;
+      states = new Int8Array(TOTAL);
+      console.log(`✅ articles.json 読み込み完了: ${TOKENS.length}トークン, 総文字数=${TOTAL}`);
+    } catch (err) {
+      console.error("⚠️ データ読込エラー:", err);
+      TOKENS = [{ japanese: "読み込み失敗", romaji: "error" }];
+      ROMAJI = "error";
+      TOTAL = ROMAJI.length;
+      states = new Int8Array(TOTAL);
+    }
 
-    // 🔸 join ではなく reduce で正確に結合（全トークン対応）
-    ROMAJI = TOKENS.reduce((acc, t) => acc + t.romaji, "");
-    TOTAL = ROMAJI.length;
-    states = new Int8Array(TOTAL);
-
-    console.log(`✅ 読み込み完了: ${TOKENS.length}トークン, 総文字数=${TOTAL}`);
-  } catch (err) {
-    console.error("⚠️ データ読込エラー:", err);
-    TOKENS = [{ japanese: "読み込み失敗", romaji: "error" }];
-    ROMAJI = "error";
-    TOTAL = ROMAJI.length;
-    states = new Int8Array(TOTAL);
+    renderText();
+    bindEvents();
+    updateStatsUI();
+    resumeCaretBlink();
+    focusInput();
   }
-
-  renderText();
-  bindEvents();
-  updateStatsUI();
-  resumeCaretBlink();
-  focusInput();
-}
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
@@ -355,4 +352,3 @@ async function init() {
     init();
   }
 })();
-
