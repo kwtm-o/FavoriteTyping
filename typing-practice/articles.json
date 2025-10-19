@@ -22,26 +22,26 @@
     "id": "002",
     "title": "海を走るノーチラス",
     "tokens": [
-      { "japanese": "最新ドロップ", "romaji": "saishin doroppu" },
-      { "japanese": "Mounts of Mayhem", "romaji": "mauntsu obu meihemu" },
+      { "japanese": "最新ドロップ", "romaji": "saishindoroppu" },
+      { "japanese": "Mounts of Mayhem", "romaji": "Mounts of Mayhem" },
       { "japanese": "で、", "romaji": "de," },
       { "japanese": "ついに", "romaji": "tsuini" },
-      { "japanese": "ノーチラス", "romaji": "nochirusu" },
+      { "japanese": "ノーチラス", "romaji": "no-chirasu" },
       { "japanese": "に", "romaji": "ni" },
       { "japanese": "乗れる", "romaji": "noreru" },
       { "japanese": "ように", "romaji": "youni" },
       { "japanese": "なった。", "romaji": "natta." },
-      { "japanese": "サンゴ礁バイオーム", "romaji": "sangoshou baiomu" },
+      { "japanese": "サンゴ礁バイオーム", "romaji": "sangoshoubaio-mu" },
       { "japanese": "を", "romaji": "wo" },
       { "japanese": "すべり、", "romaji": "suberi," },
       { "japanese": "スピア", "romaji": "supia" },
       { "japanese": "を", "romaji": "wo" },
       { "japanese": "手に", "romaji": "teni" },
-      { "japanese": "Lunge", "romaji": "ranji" },
+      { "japanese": "Lunge", "romaji": "lunge" },
       { "japanese": "で", "romaji": "de" },
       { "japanese": "突き進む。", "romaji": "tsukisusumu." },
-      { "japanese": "海の", "romaji": "umi no" },
-      { "japanese": "旅が、", "romaji": "tabi ga," },
+      { "japanese": "海の", "romaji": "umino" },
+      { "japanese": "旅が、", "romaji": "tabiga," },
       { "japanese": "マインクラフト", "romaji": "mainkurafuto" },
       { "japanese": "に", "romaji": "ni" },
       { "japanese": "新しい", "romaji": "atarashii" },
@@ -50,3 +50,4 @@
     ]
   }
 ]
+
