@@ -51,11 +51,15 @@
   // ========= データ読込（articles.jsonからid指定で取得） =========
   async function loadData() {
     const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get("id"); // ?id=xxx
+    const id = urlParams.get("id"); // URLパラメータからid取得
     const res = await fetch("./articles.json");
     if (!res.ok) throw new Error("articles.json の読み込みに失敗しました");
+
     const json = await res.json();
     const article = json.find((a) => a.id === id) || json[0];
+    console.log("📄 選択された原稿:", article.title);
+    console.log("✅ tokens数:", article.tokens.length);
+
     return article.tokens; // tokens配列を返す
   }
 
@@ -120,8 +124,10 @@
     `;
   }
 
-  // ========= 描画 =========
+  // ========= 描画処理 =========
   function renderText({ animateCaret = false } = {}) {
+    if (!TOKENS.length) return;
+
     let html = "";
     let offset = 0;
     const highlightOn = isHighlightOn();
@@ -163,6 +169,7 @@
     }
 
     lines.innerHTML = html;
+
     const tmp = $$(".romaji-line .char", lines);
     const ordered = new Array(TOTAL);
     for (const el of tmp) {
@@ -173,9 +180,10 @@
     updateCaret(animateCaret);
   }
 
-  // ========= キャレット =========
+  // ========= キャレット更新 =========
   function updateCaret(animated = true) {
     if (!toggleCaret.checked) return;
+    if (!charSpans.length) return;
 
     caretEl.style.position = "absolute";
     caretEl.style.background = "var(--caret-color, currentColor)";
@@ -189,13 +197,10 @@
     let targetRect;
     if (currentIndex < charSpans.length && charSpans[currentIndex]) {
       targetRect = charSpans[currentIndex].getBoundingClientRect();
-    } else if (charSpans.length) {
+    } else {
       const last = charSpans[charSpans.length - 1];
       const r = last.getBoundingClientRect();
       targetRect = new DOMRect(r.right, r.top, 0, r.height);
-    } else {
-      const base = lines.getBoundingClientRect();
-      targetRect = new DOMRect(base.left, base.top, 0, base.height);
     }
 
     const baseRect = lines.getBoundingClientRect();
@@ -219,7 +224,7 @@
     if (isCorrect) {
       states[currentIndex] = 1;
       correctCount++;
-      if (typos[currentIndex]) delete typos[currentIndex];
+      delete typos[currentIndex];
     } else {
       states[currentIndex] = -1;
       errorCount++;
@@ -245,7 +250,7 @@
     focusInput();
   }
 
-  function resetRun({ rebuild = true } = {}) {
+  function resetRun() {
     started = false;
     finished = false;
     startTime = 0;
@@ -256,16 +261,8 @@
     errorCount = 0;
     btnStart.setAttribute("aria-pressed", "false");
 
-    if (rebuild) {
-      ROMAJI = TOKENS.map((t) => t.romaji).join("");
-      TOTAL = ROMAJI.length;
-      states = new Int8Array(TOTAL);
-      typos = Object.create(null);
-    } else {
-      states.fill(0);
-      typos = Object.create(null);
-    }
-
+    states = new Int8Array(TOTAL);
+    typos = Object.create(null);
     renderText({ animateCaret: false });
     updateStatsUI();
   }
@@ -296,13 +293,13 @@
   // ========= イベントバインド =========
   function bindEvents() {
     btnStart?.addEventListener("click", () => {
-      if (finished) resetRun({ rebuild: false });
+      if (finished) resetRun();
       if (!started) startRun();
       focusInput();
     });
 
     btnRestart?.addEventListener("click", () => {
-      resetRun({ rebuild: false });
+      resetRun();
       startRun();
     });
 
@@ -333,7 +330,7 @@
       ROMAJI = TOKENS.map((t) => t.romaji).join("");
       TOTAL = ROMAJI.length;
       states = new Int8Array(TOTAL);
-      console.log(`✅ articles.json 読み込み完了: ${TOKENS.length}件`);
+      console.log(`✅ articles.json 読み込み完了: ${TOKENS.length}トークン`);
     } catch (err) {
       console.error("⚠️ データ読込エラー:", err);
       TOKENS = [{ japanese: "読み込み失敗", romaji: "error" }];
@@ -342,9 +339,9 @@
       states = new Int8Array(TOTAL);
     }
 
-    updateStatsUI();
-    bindEvents();
     renderText();
+    bindEvents();
+    updateStatsUI();
     resumeCaretBlink();
     focusInput();
   }
