@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>原稿リスト - Typing Practice</title>
+  <link rel="stylesheet" href="./typing-practice.css" />
+</head>
+<body>
+  <main id="article-list">
+    <h1>タイピング原稿リスト</h1>
+    <ul id="list"></ul>
+  </main>
+
+  <script type="module">
+    async function init() {
+      const res = await fetch('./articles.json');
+      const articles = await res.json();
+
+      const ul = document.getElementById('list');
+      for (const a of articles) {
+        const li = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = `typing.html?id=${a.id}`;
+        link.textContent = a.title;
+        li.appendChild(link);
+        ul.appendChild(li);
+      }
+    }
+    init();
+  </script>
+</body>
+</html>
