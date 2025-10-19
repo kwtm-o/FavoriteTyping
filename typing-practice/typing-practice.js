@@ -46,22 +46,31 @@
     return viewport.getAttribute("data-highlight-current") !== "off";
   }
 
-  // ========= データ =========
-  function loadData() {
-    const script = $("#ja-romaji-data");
-    if (script) {
-      try {
-        const json = JSON.parse(script.textContent.trim());
-        if (Array.isArray(json) && json.length) return json;
-      } catch (e) {
-        console.warn("JSON parse failed, fallback to global JA_ROMAJI_DATA", e);
-      }
-    }
-    if (Array.isArray(window.JA_ROMAJI_DATA) && window.JA_ROMAJI_DATA.length) {
-      return window.JA_ROMAJI_DATA;
-    }
-    return [{ japanese: "サンプル", romaji: "sanpuru" }];
+  // ========= データ読込（articles.json専用） =========
+async function loadData() {
+  const res = await fetch('./articles.json');  // 同じフォルダにarticles.jsonを置く
+  if (!res.ok) {
+    throw new Error('articles.json の読み込みに失敗しました');
   }
+  const json = await res.json();
+  return json;
+}
+
+// ========= 初期化 =========
+let TOKENS = [];
+let ROMAJI = '';
+let TOTAL = 0;
+
+loadData()
+  .then(data => {
+    TOKENS = data;
+    ROMAJI = TOKENS.map(t => t.romaji).join('');
+    TOTAL = ROMAJI.length;
+    console.log(`✅ articles.json 読み込み完了: ${TOKENS.length}件`);
+  })
+  .catch(err => {
+    console.error('⚠️ データ読込エラー:', err);
+  });
 
   let TOKENS = loadData();
   let ROMAJI = TOKENS.map(t => t.romaji).join("");
@@ -460,6 +469,7 @@
     init();
   }
 })();
+
 
 
 
