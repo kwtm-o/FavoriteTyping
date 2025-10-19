@@ -72,10 +72,6 @@ loadData()
     console.error('⚠️ データ読込エラー:', err);
   });
 
-  let TOKENS = loadData();
-  let ROMAJI = TOKENS.map(t => t.romaji).join("");
-  let TOTAL = ROMAJI.length;
-
   // ========= 状態 =========
   let states = new Int8Array(TOTAL); // 0:未入力, 1:正解, -1:ミス
   let typos = Object.create(null);   // index -> last wrong char
@@ -469,6 +465,7 @@ loadData()
     init();
   }
 })();
+
 
 
 
