@@ -322,29 +322,32 @@
   }
 
   // ========= 初期化 =========
-  async function init() {
-    installTypoStyles();
+async function init() {
+  installTypoStyles();
 
-    try {
-      TOKENS = await loadData(); // ✅ 読み込み完了を待つ
-      ROMAJI = TOKENS.map((t) => t.romaji).join("");
-      TOTAL = ROMAJI.length;
-      states = new Int8Array(TOTAL);
-      console.log(`✅ articles.json 読み込み完了: ${TOKENS.length}トークン`);
-    } catch (err) {
-      console.error("⚠️ データ読込エラー:", err);
-      TOKENS = [{ japanese: "読み込み失敗", romaji: "error" }];
-      ROMAJI = "error";
-      TOTAL = ROMAJI.length;
-      states = new Int8Array(TOTAL);
-    }
+  try {
+    TOKENS = await loadData(); // ✅ 読み込み完了を待つ
 
-    renderText();
-    bindEvents();
-    updateStatsUI();
-    resumeCaretBlink();
-    focusInput();
+    // 🔸 join ではなく reduce で正確に結合（全トークン対応）
+    ROMAJI = TOKENS.reduce((acc, t) => acc + t.romaji, "");
+    TOTAL = ROMAJI.length;
+    states = new Int8Array(TOTAL);
+
+    console.log(`✅ 読み込み完了: ${TOKENS.length}トークン, 総文字数=${TOTAL}`);
+  } catch (err) {
+    console.error("⚠️ データ読込エラー:", err);
+    TOKENS = [{ japanese: "読み込み失敗", romaji: "error" }];
+    ROMAJI = "error";
+    TOTAL = ROMAJI.length;
+    states = new Int8Array(TOTAL);
   }
+
+  renderText();
+  bindEvents();
+  updateStatsUI();
+  resumeCaretBlink();
+  focusInput();
+}
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
@@ -352,3 +355,4 @@
     init();
   }
 })();
+
