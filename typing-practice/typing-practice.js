@@ -237,7 +237,7 @@
     updateStatsUI();
     pauseCaretBlink();
 
-    if (currentIndex >= TOTAL) completeRun();
+    if (currentIndex >= TOTAL) finished = true;
   }
 
   // ========= スタート・リセット =========
@@ -326,11 +326,10 @@
 
     try {
       TOKENS = await loadData();
-      // 全トークンをreduceで正確に結合
       ROMAJI = TOKENS.reduce((acc, t) => acc + t.romaji, "");
       TOTAL = ROMAJI.length;
       states = new Int8Array(TOTAL);
-      console.log(`✅ articles.json 読み込み完了: ${TOKENS.length}トークン, 総文字数=${TOTAL}`);
+      console.log(`✅ 読み込み完了: ${TOKENS.length}トークン, 総文字数=${TOTAL}`);
     } catch (err) {
       console.error("⚠️ データ読込エラー:", err);
       TOKENS = [{ japanese: "読み込み失敗", romaji: "error" }];
