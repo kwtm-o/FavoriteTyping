@@ -47,25 +47,34 @@
   }
 
   // ========= データ =========
-  function loadData() {
-    const script = $("#ja-romaji-data");
-    if (script) {
-      try {
-        const json = JSON.parse(script.textContent.trim());
-        if (Array.isArray(json) && json.length) return json;
-      } catch (e) {
-        console.warn("JSON parse failed, fallback to global JA_ROMAJI_DATA", e);
-      }
-    }
-    if (Array.isArray(window.JA_ROMAJI_DATA) && window.JA_ROMAJI_DATA.length) {
-      return window.JA_ROMAJI_DATA;
-    }
-    return [{ japanese: "サンプル", romaji: "sanpuru" }];
+  async function loadTokensFromArticles() {
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+  if (!id) {
+    alert("原稿IDが指定されていません。index.htmlから選択してください。");
+    location.href = "./index.html";
+    return [];
   }
 
-  let TOKENS = loadData();
-  let ROMAJI = TOKENS.map(t => t.romaji).join("");
-  let TOTAL = ROMAJI.length;
+  try {
+    const res = await fetch("./articles.json");
+    const articles = await res.json();
+    const article = articles.find(a => a.id === id);
+    if (!article) {
+      alert("指定された原稿が見つかりません。");
+      location.href = "./index.html";
+      return [];
+    }
+    return article.tokens;
+  } catch (e) {
+    console.error("articles.jsonの読み込みに失敗:", e);
+    return [{ japanese: "エラー", romaji: "error" }];
+  }
+}
+
+let TOKENS = [];   // ← 初期化のみ
+let ROMAJI = "";
+let TOTAL = 0;
 
   // ========= 状態 =========
   let states = new Int8Array(TOTAL); // 0:未入力, 1:正解, -1:ミス
@@ -431,28 +440,38 @@
   }
 
   // ========= 初期化 =========
-  function init() {
-    installTypoStyles();
+  async function init() {
+  installTypoStyles();
 
-    // 初期の「次の文字ハイライト」状態を決定（属性が無ければオフで統一）
-    if (viewport.hasAttribute("data-highlight-current")) {
-      const on = viewport.getAttribute("data-highlight-current") !== "off";
-      if (toggleCurrentHighlight) toggleCurrentHighlight.checked = on;
-    } else {
-      viewport.setAttribute("data-highlight-current", "off"); // 初期はオフ
-      if (toggleCurrentHighlight) toggleCurrentHighlight.checked = false;
-    }
+  // ✅ ここで articles.json からTOKENSを取得
+  TOKENS = await loadTokensFromArticles();
+  ROMAJI = TOKENS.map(t => t.romaji).join("");
+  TOTAL = ROMAJI.length;
+  states = new Int8Array(TOTAL);
 
-    updateIndicateTyposUI(); // これが renderText も呼ぶ
-    bindEvents();
-    updateStatsUI();
-    updateCaretVisibility();
-    syncFontSize();
-    resumeCaretBlink();
-    focusInput();
-
-    viewport.setAttribute("aria-label", "トークン単位の2段表示（上：日本語、下：ローマ字）。ローマ字入力で判定します。");
+  // （以下、元の初期化処理はそのまま）
+  if (viewport.hasAttribute("data-highlight-current")) {
+    const on = viewport.getAttribute("data-highlight-current") !== "off";
+    if (toggleCurrentHighlight) toggleCurrentHighlight.checked = on;
+  } else {
+    viewport.setAttribute("data-highlight-current", "off");
+    if (toggleCurrentHighlight) toggleCurrentHighlight.checked = false;
   }
+
+  updateIndicateTyposUI();
+  bindEvents();
+  updateStatsUI();
+  updateCaretVisibility();
+  syncFontSize();
+  resumeCaretBlink();
+  focusInput();
+
+  viewport.setAttribute(
+    "aria-label",
+    "トークン単位の2段表示（上：日本語、下：ローマ字）。ローマ字入力で判定します。"
+  );
+}
+
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
@@ -460,6 +479,7 @@
     init();
   }
 })();
+
 
 
 
